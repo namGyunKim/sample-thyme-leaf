@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko"
+      layout:decorate="~{layout/default}"
+      xmlns:layout="[http://www.ultraq.net.nz/thymeleaf/layout](http://www.ultraq.net.nz/thymeleaf/layout)"
+      xmlns:th="[http://www.thymeleaf.org](http://www.thymeleaf.org)"
+      xmlns:sec="[http://www.thymeleaf.org/extras/spring-security](http://www.thymeleaf.org/extras/spring-security)">
+<head>
+    <title>회원 상세 정보</title>
+</head>
+<body>
+<div class="max-w-2xl mx-auto" layout:fragment="content">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">회원 상세 정보</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">개인 정보 및 계정 상태</p>
+            </div>
+
+            <div class="flex space-x-2">
+                <!-- [수정] 등급 변경 버튼: 오직 최고 관리자(SUPER_ADMIN)이면서 본인이 아닐 때만 표시 -->
+                <a class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all transform hover:-translate-y-0.5"
+                   th:if="${#authorization.expression('hasRole(''SUPER_ADMIN'')') and #authentication.principal.id != member.profile.id}"
+                   th:href="@{/member/{role}/role-update/{id}(role=${role}, id=${member.profile.id})}">
+                    <i class="fa-solid fa-user-tag mr-1.5 my-auto text-gray-400"></i>등급 변경
+                </a>
+
+                <!-- 수정 버튼: 본인, 최고관리자, 또는 (관리자 -> 유저) 인 경우 표시 -->
+                <div th:if="${#authentication.principal.id == member.profile.id} or ${#authorization.expression('hasRole(''SUPER_ADMIN'')')} or (${#authorization.expression('hasRole(''ADMIN'')')} and ${member.profile.role.name() == 'USER'})">
+                    <a class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all transform hover:-translate-y-0.5"
+                       th:href="@{/member/{role}/update/{id}(role=${role}, id=${member.profile.id})}">
+                        정보 수정
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-gray-200">
+            <dl>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">로그인 아이디</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"
+                        th:text="${member.profile.loginId}">user1
+                    </dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">닉네임</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"
+                        th:text="${member.profile.nickName}">홍길동
+                    </dd>
+                </div>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">권한</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                              th:classappend="${member.profile.role.name() == 'ADMIN' ? 'bg-purple-100 text-purple-800' : (member.profile.role.name() == 'SUPER_ADMIN' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800')}"
+                              th:text="${member.profile.role.value}">USER</span>
+                    </dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">가입 유형</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2"
+                        th:text="${member.profile.memberType.value}">GENERAL
+                    </dd>
+                </div>
+
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">가입일 / 가입자</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        <span th:text="${member.profile.createdAt}">2024-01-01 12:00</span>
+                        <span class="text-gray-400 text-xs ml-2"
+                              th:if="${member.profile.createdBy}"
+                              th:text="'(by ' + ${member.profile.createdBy} + ')'"></span>
+                    </dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">최종 수정일 / 수정자</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        <span th:text="${member.profile.modifiedAt}">2024-01-02 15:30</span>
+                        <span class="text-red-500 text-xs ml-2 font-bold"
+                              th:if="${member.profile.modifiedBy}"
+                              th:text="'(by ' + ${member.profile.modifiedBy} + ')'"></span>
+                    </dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <div class="mt-6 flex justify-end space-x-3">
+        <a class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition"
+           th:href="@{/member/{role}/list(role=${role})}">
+            목록으로
+        </a>
+
+        <form method="post" onsubmit="return confirm('정말로 탈퇴/비활성화 처리하시겠습니까?');"
+              th:action="@{/member/{role}/inactive/{id}(role=${role}, id=${member.profile.id})}"
+              th:if="${#authentication.principal.id == member.profile.id} or ${#authorization.expression('hasRole(''SUPER_ADMIN'')')} or (${#authorization.expression('hasRole(''ADMIN'')')} and ${member.profile.role.name() == 'USER'})">
+            <button class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition"
+                    type="submit">
+                <span th:text="${#authentication.principal.id == member.profile.id} ? '회원 탈퇴' : '강제 탈퇴'">회원 탈퇴</span>
+            </button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko"
+      layout:decorate="~{layout/default}"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+>
+<head>
+    <title th:text="${post.title}">게시글 상세</title>
+
+    <!-- SEO 메타 태그 주입 -->
+    <th:block layout:fragment="meta-description">
+        <meta name="description" th:content="${post.title} + ' - ' + ${#strings.abbreviate(post.content, 100)}">
+    </th:block>
+
+    <!-- Open Graph 태그 (동적 썸네일 적용) -->
+    <th:block layout:fragment="og-title">
+        <meta property="og:title" th:content="${post.title} + ' | 샘플'">
+    </th:block>
+    <th:block layout:fragment="og-description">
+        <meta property="og:description" th:content="${#strings.abbreviate(post.content, 150)}">
+    </th:block>
+    <th:block layout:fragment="og-image">
+        <!-- 썸네일이 있으면 해당 이미지, 없으면 기본 로고 사용 -->
+        <meta property="og:image"
+              th:content="${post.thumbnailUrl != null ? post.thumbnailUrl : '/image/og-default .png'}">
+    </th:block>
+</head>
+<body>
+<div layout:fragment="content" class="max-w-4xl mx-auto animate-fade-in">
+
+    <!-- 상단 네비게이션 -->
+    <div class="mb-4">
+        <a th:href="@{/board/{type}/list(type=${typeStr})}" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors">
+            <i class="fa-solid fa-arrow-left mr-2"></i> <span th:text="${postType.title} + ' 목록으로'">목록으로</span>
+        </a>
+    </div>
+
+    <!-- 게시글 본문 -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+        <div class="px-6 py-6 sm:px-8 border-b border-gray-100">
+            <!-- 카테고리 & 날짜 -->
+            <div class="flex items-center justify-between mb-4">
+                <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-primary border border-blue-100" th:text="${post.postType}">FREE</span>
+                <span class="text-sm text-gray-400" th:text="${post.createdAt}">2024-01-01 12:00</span>
+            </div>
+
+            <!-- 제목 -->
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 leading-tight" th:text="${post.title}">제목</h1>
+
+            <!-- 작성자 정보 -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mr-3 border border-gray-200">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-sm font-semibold text-gray-900" th:text="${post.authorNickname}">작성자</span>
+                        <span class="text-xs text-gray-500">Level 1</span>
+                    </div>
+                </div>
+                <div class="flex items-center text-sm text-gray-400 space-x-4 bg-gray-50 px-3 py-1.5 rounded-lg">
+                    <span class="flex items-center gap-1"><i class="fa-regular fa-eye"></i><span th:text="${post.viewCount}">0</span></span>
+                    <!-- 좋아요 카운트 및 아이콘 -->
+                    <span class="flex items-center gap-1 transition-colors" id="like-stat-container"
+                          th:classappend="${post.isLiked} ? 'text-red-500' : 'text-gray-400'">
+                        <i id="like-stat-icon"
+                           th:class="${post.isLiked} ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
+                        <span id="like-count" th:text="${post.likeCount}">0</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 내용 -->
+        <div class="px-6 py-8 sm:px-8 min-h-[200px] prose prose-blue max-w-none text-gray-800 leading-relaxed">
+            <p th:utext="${#strings.replace(#strings.escapeXml(post.content), '&#10;', '<br/>')}">본문 내용</p>
+        </div>
+
+        <!-- 좋아요 및 액션 버튼 -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+            <button class="group flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white hover:border-red-200 hover:bg-red-50 transition shadow-sm cursor-pointer"
+                    th:attr="hx-post=@{/board/{type}/like/{id}(type=${typeStr}, id=${post.postId})}"
+                    hx-target="#like-count"
+                    hx-on:htmx:after-request="
+                        if(event.detail.successful) {
+                            var btnIcon = this.querySelector('i');
+                            var isLiked = btnIcon.classList.contains('fa-solid');
+                            var statContainer = document.getElementById('like-stat-container');
+                            var statIcon = document.getElementById('like-stat-icon');
+
+                            if (isLiked) {
+                                btnIcon.classList.remove('fa-solid', 'text-red-500');
+                                btnIcon.classList.add('fa-regular', 'text-gray-400');
+                                if(statContainer) { statContainer.classList.remove('text-red-500'); statContainer.classList.add('text-gray-400'); }
+                                if(statIcon) { statIcon.classList.remove('fa-solid'); statIcon.classList.add('fa-regular'); }
+                            } else {
+                                btnIcon.classList.remove('fa-regular', 'text-gray-400');
+                                btnIcon.classList.add('fa-solid', 'text-red-500');
+                                if(statContainer) { statContainer.classList.remove('text-gray-400'); statContainer.classList.add('text-red-500'); }
+                                if(statIcon) { statIcon.classList.remove('fa-regular'); statIcon.classList.add('fa-solid'); }
+                            }
+                        }
+                    "
+                    hx-swap="innerHTML">
+                <i class="fa-regular fa-heart text-gray-400 group-hover:text-red-500 transition-colors" th:classappend="${post.isLiked} ? 'fa-solid text-red-500' : ''"></i>
+                <span class="text-sm font-medium text-gray-600 group-hover:text-red-600 transition-colors">좋아요</span>
+            </button>
+
+            <div class="flex gap-2" th:if="${currentUser.id == post.authorUserId or #authorization.expression('hasRole(''SUPER_ADMIN'')')}">
+                <a th:href="@{/board/{type}/update/{id}(type=${typeStr}, id=${post.postId})}" class="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">수정</a>
+                <form th:action="@{/board/{type}/delete/{id}(type=${typeStr}, id=${post.postId})}" method="post" onsubmit="return confirm('정말 삭제하시겠습니까? 복구할 수 없습니다.');">
+                    <button type="submit" class="px-3 py-2 text-sm font-medium text-red-600 bg-white border border-gray-300 rounded-lg hover:bg-red-50 hover:border-red-200 transition">삭제</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 목록 버튼 -->
+    <div class="flex justify-center">
+        <a th:href="@{/board/{type}/list(type=${typeStr})}" class="text-sm font-medium text-gray-500 hover:text-gray-900 border-b border-transparent hover:border-gray-400 pb-0.5 transition-all">
+            목록으로 돌아가기
+        </a>
+    </div>
+</div>
+
+<!-- 구조화된 데이터 (JSON-LD) 수정: ISO 날짜 및 동적 이미지 적용 -->
+<th:block layout:fragment="script">
+    <script th:inline="javascript" type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": [
+                [
+                    $
+                    {
+                        post.title
+                    }
+                ]
+            ],
+            "image": [
+                [
+                    [
+                        $
+                        {
+                            post.thumbnailUrl
+                            !=
+                            null
+                            ?
+                            post.thumbnailUrl: 'https://secret.com/image/og-default .png'
+                        }
+                    ]
+                ]
+            ],
+            "datePublished": [
+                [
+                    $
+                    {
+                        post.createdAtIso
+                    }
+                ]
+            ],
+            "author": [
+                {
+                    "@type": "Person",
+                    "name": [
+                        [
+                            $
+                            {
+                                post.authorNickname
+                            }
+                        ]
+                    ]
+                }
+            ]
+        }
+    </script>
+</th:block>
+</body>
+</html>

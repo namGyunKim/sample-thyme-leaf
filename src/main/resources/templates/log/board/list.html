@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko"
+      layout:decorate="~{layout/default}"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>게시글 활동 로그</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- 페이지 헤더 -->
+    <div class="sm:flex sm:items-center sm:justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">게시글 활동 로그</h1>
+            <p class="mt-1 text-sm text-gray-500">게시판 내 주요 활동(작성, 수정, 삭제 등) 이력을 확인합니다.</p>
+        </div>
+
+        <!-- 검색 폼 -->
+        <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+            <form class="flex gap-2 items-start" method="get" th:action="@{/log/board}" th:object="${request}">
+                <!-- 페이지 사이즈 유지 -->
+                <input th:field="*{size}" type="hidden">
+
+                <div class="relative rounded-md shadow-sm">
+                    <input class="block w-full rounded-md border-gray-300 pr-10 focus:border-primary focus:ring-primary sm:text-sm" placeholder="게시글 제목 검색"
+                           style="min-width: 250px;"
+                           th:field="*{searchWord}"
+                           type="text">
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                        <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+                    </div>
+                </div>
+                <button class="inline-flex items-center justify-center rounded-md border border-transparent bg-gray-800 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition"
+                        type="submit">
+                    검색
+                </button>
+                <!-- 초기화 -->
+                <a class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition" th:href="@{/log/board}"
+                   th:if="${not #strings.isEmpty(request.searchWord)}"
+                   title="검색 초기화">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- 에러 메시지 -->
+    <div class="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 animate-fade-in"
+         th:if="${#fields.hasErrors('${request.*}')}">
+        <div class="flex items-start gap-3">
+            <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
+            <div>
+                <h3 class="font-medium">요청 값에 오류가 있습니다.</h3>
+                <ul class="mt-1 list-disc list-inside text-sm text-red-600">
+                    <li th:each="err : ${#fields.errors('${request.*}')}" th:text="${err}"></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로그 테이블 -->
+    <div class="bg-white shadow-sm ring-1 ring-black ring-opacity-5 sm:rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-300">
+                <thead class="bg-gray-50">
+                <tr>
+                    <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6" scope="col">ID
+                    </th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900" scope="col">발생 일시</th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900" scope="col">유형</th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900" scope="col">PostID</th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900" scope="col">게시글 제목</th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900" scope="col">수행자</th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900" scope="col">IP</th>
+                    <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900" scope="col">상세 내용</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                <tr class="hover:bg-gray-50 transition" th:each="log : ${logPage.content}">
+                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6" th:text="${log.id}">1
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" th:text="${log.createdAt}">
+                        2024-01-01
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm">
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                              th:classappend="${log.logType.name() == 'POST_CREATE' ? 'bg-green-100 text-green-800' :
+                                               (log.logType.name() == 'POST_DELETE' ? 'bg-red-100 text-red-800' :
+                                               (log.logType.name() == 'POST_UPDATE' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'))}"
+                              th:text="${log.logType.description}">작성</span>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" th:text="${log.postId}">123</td>
+                    <td class="px-3 py-4 text-sm font-medium text-gray-900 break-all" style="max-width: 300px;">
+                        <a class="hover:underline hover:text-primary"
+                           target="_blank" th:href="@{/board/free/detail/{id}(id=${log.postId}, type='free')}"
+                           th:text="${log.postTitle}">제목</a>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" th:text="${log.executorId}">admin</td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" th:text="${log.clientIp}">127.0.0.1
+                    </td>
+                    <td class="px-3 py-4 text-sm text-gray-500 break-all" th:text="${log.details}">내용</td>
+                </tr>
+                <tr th:if="${logPage.empty}">
+                    <td class="px-6 py-10 text-center text-sm text-gray-500" colspan="8">
+                        <div class="flex flex-col items-center justify-center">
+                            <i class="fa-solid fa-clipboard-list text-4xl text-gray-300 mb-3"></i>
+                            <p>로그 기록이 없습니다.</p>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6"
+             th:if="${!logPage.empty}">
+            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-center">
+                <nav aria-label="Pagination" class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                    <a class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                       th:href="@{/log/board(page=${logPage.number}, searchWord=${request.searchWord})}"
+                       th:if="${logPage.hasPrevious()}">
+                        <span class="sr-only">Previous</span>
+                        <i class="fa-solid fa-chevron-left h-5 w-5"></i>
+                    </a>
+                    <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 focus:outline-offset-0 bg-blue-50"
+                          th:text="${logPage.number + 1} + ' / ' + ${logPage.totalPages}">
+                        1 / 10
+                    </span>
+                    <a class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                       th:href="@{/log/board(page=${logPage.number + 2}, searchWord=${request.searchWord})}"
+                       th:if="${logPage.hasNext()}">
+                        <span class="sr-only">Next</span>
+                        <i class="fa-solid fa-chevron-right h-5 w-5"></i>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

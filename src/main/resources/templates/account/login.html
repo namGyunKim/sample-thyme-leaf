@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko"
+      layout:decorate="~{layout/default}"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>로그인</title>
+</head>
+<body>
+<div class="flex min-h-[70vh] flex-col justify-center py-12 sm:px-6 lg:px-8 animate-fade-in" layout:fragment="content">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <a class="mx-auto h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-4xl mb-6 transition-transform hover:scale-110 duration-300 inline-flex"
+           th:href="@{/}">
+            <i class="fa-solid fa-cube"></i>
+        </a>
+        <h2 class="text-center text-3xl font-extrabold text-gray-900 tracking-tight">
+            환영합니다!
+        </h2>
+        <p class="mt-2 text-center text-sm text-gray-600">
+            샘플을 이용하시려면 로그인이 필요합니다.
+        </p>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow-xl shadow-gray-100 sm:rounded-2xl sm:px-10 border border-gray-100">
+
+            <!-- 알림 메시지 -->
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-md animate-fade-in-down"
+                 th:if="${errorMessage}">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fa-solid fa-circle-exclamation text-red-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700 font-medium" th:text="${errorMessage}"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-r-md animate-fade-in-down"
+                 th:if="${logoutMessage}">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fa-solid fa-circle-check text-green-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-green-700 font-medium" th:text="${logoutMessage}"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <!-- 소셜 로그인 (단독 표시) -->
+                <div>
+                    <div class="grid grid-cols-1 gap-3">
+                        <a th:href="@{/social/google/login}" hx-boost="false"
+                           class="w-full inline-flex justify-center items-center py-3.5 px-4 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 transform hover:-translate-y-0.5 group">
+                            <img alt="Google logo"
+                                 class="h-5 w-5 mr-3 group-hover:scale-110 transition-transform" src="https://www.svgrepo.com/show/475656/google-color.svg">
+                            <span>Google 계정으로 계속하기</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- (일반 회원가입/로그인 불가) -->
+    </div>
+</div>
+</body>
+</html>

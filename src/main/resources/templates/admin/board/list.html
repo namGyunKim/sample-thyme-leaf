@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko"
+      layout:decorate="~{layout/default}"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>통합 게시물 관리</title>
+</head>
+<body>
+<div class="animate-fade-in" layout:fragment="content">
+
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-purple-600"></i> 통합 게시물 관리
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">전체 게시판의 글을 조회하고 관리(삭제/복구/공지)합니다.</p>
+    </div>
+
+    <!-- 검색 및 필터 -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
+        <form class="flex flex-col lg:flex-row gap-3" method="get" th:action="@{/admin/board/list}"
+              th:object="${request}">
+
+            <!-- 게시판 타입 필터 -->
+            <div class="relative min-w-[140px]">
+                <select class="appearance-none block w-full rounded-lg border-gray-200 bg-gray-50 py-2.5 pl-3 pr-8 text-sm focus:border-purple-500 focus:bg-white focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                        th:field="*{searchPostType}">
+                    <option value="">모든 게시판</option>
+                    <option th:each="type : ${postTypes}" th:text="${type.title}" th:value="${type}">자유게시판</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </div>
+            </div>
+
+            <!-- 상태 필터 -->
+            <div class="relative min-w-[120px]">
+                <select class="appearance-none block w-full rounded-lg border-gray-200 bg-gray-50 py-2.5 pl-3 pr-8 text-sm focus:border-purple-500 focus:bg-white focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                        th:field="*{active}">
+                    <option value="ALL">모든 상태</option>
+                    <option value="ACTIVE">활성 (Active)</option>
+                    <option value="INACTIVE">삭제됨 (Inactive)</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </div>
+            </div>
+
+            <!-- 검색 필터 -->
+            <div class="relative min-w-[120px]">
+                <select class="appearance-none block w-full rounded-lg border-gray-200 bg-gray-50 py-2.5 pl-3 pr-8 text-sm focus:border-purple-500 focus:bg-white focus:ring-1 focus:ring-purple-500 cursor-pointer"
+                        th:field="*{filter}">
+                    <option value="ALL">전체 검색</option>
+                    <option value="TITLE">제목</option>
+                    <option value="CONTENT">내용</option>
+                    <option value="NICK_NAME">작성자</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </div>
+            </div>
+
+            <!-- 검색어 입력 -->
+            <div class="relative flex-grow">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+                </div>
+                <input class="block w-full rounded-lg border-gray-200 bg-gray-50 py-2.5 pl-10 text-sm focus:border-purple-500 focus:bg-white focus:ring-1 focus:ring-purple-500" placeholder="검색어를 입력하세요" th:field="*{searchWord}"
+                       type="text">
+            </div>
+
+            <button class="px-5 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition shadow-sm whitespace-nowrap"
+                    type="submit">
+                검색
+            </button>
+        </form>
+    </div>
+
+    <!-- 게시글 테이블 -->
+    <div class="bg-white shadow-sm ring-1 ring-gray-200 sm:rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider"
+                        scope="col">상태
+                    </th>
+                    <th class="px-4 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider"
+                        scope="col">ID
+                    </th>
+                    <th class="px-4 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider"
+                        scope="col">제목
+                    </th>
+                    <th class="px-4 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider"
+                        scope="col">작성자
+                    </th>
+                    <th class="px-4 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider"
+                        scope="col">작성일
+                    </th>
+                    <th class="px-4 py-3.5 text-right text-xs font-bold text-gray-500 uppercase tracking-wider"
+                        scope="col">관리
+                    </th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 bg-white">
+                <tr class="hover:bg-purple-50/30 transition-colors"
+                    th:classappend="${!post.isPinned} ? (${post.active.name() == 'INACTIVE'} ? 'bg-gray-100 opacity-70' : '') : 'bg-yellow-50/50'"
+                    th:each="post : ${postPage.content}">
+
+                    <!-- 상태 (핀/활성/삭제) -->
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">
+                        <div class="flex items-center gap-2">
+                            <!-- 공지 핀 -->
+                            <form class="inline" method="post" th:action="@{/admin/board/pin/{id}(id=${post.id})}">
+                                <button class="text-gray-400 hover:text-yellow-500 transition" title="공지 설정/해제"
+                                        type="submit">
+                                    <i class="fa-solid fa-thumbtack"
+                                       th:classappend="${post.isPinned} ? 'text-yellow-500' : ''"></i>
+                                </button>
+                            </form>
+
+                            <!-- 상태 뱃지 -->
+                            <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
+                                  th:classappend="${post.active.name() == 'ACTIVE'} ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-50 text-gray-600 ring-gray-500/10'"
+                                  th:text="${post.active.name() == 'ACTIVE' ? '활성' : '삭제됨'}">
+                                활성
+                            </span>
+                        </div>
+                    </td>
+
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${post.id}">1</td>
+
+                    <td class="px-4 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <!-- 삭제된 글은 취소선 처리 -->
+                            <a class="text-sm font-medium text-gray-900 hover:text-purple-600 hover:underline truncate max-w-xs" target="_blank"
+                               th:classappend="${post.active.name() == 'INACTIVE'} ? 'line-through text-gray-400' : ''"
+                               th:href="@{/board/{type}/detail/{id}(type=${#strings.toLowerCase(post.postType ?: 'free')}, id=${post.id})}"
+                               th:text="${post.title}">제목</a>
+                            <span class="ml-2 text-gray-400 text-xs" th:if="${post.hasImage}"><i
+                                    class="fa-regular fa-image"></i></span>
+                        </div>
+                    </td>
+
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600" th:text="${post.authorNickname}">작성자
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${post.createdAt}">
+                        2024.01.01
+                    </td>
+
+                    <!-- 관리 버튼 -->
+                    <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex items-center justify-end gap-2">
+                            <!-- [수정] 비활성 버튼: ACTIVE 상태일 때만 표시 -->
+                            <form method="post" onsubmit="return confirm('게시글을 비활성화(Soft Delete) 하시겠습니까? 사용자에게는 보이지 않게 됩니다.');"
+                                  th:action="@{/admin/board/deactivate/{id}(id=${post.id})}"
+                                  th:if="${post.active.name() == 'ACTIVE'}">
+                                <button class="text-orange-600 hover:text-orange-900 bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded transition"
+                                        title="비활성화 (Soft Delete)"
+                                        type="submit">
+                                    <i class="fa-solid fa-ban"></i> 비활성
+                                </button>
+                            </form>
+
+                            <!-- [수정] 복구 버튼: INACTIVE 상태일 때만 표시 -->
+                            <form method="post" onsubmit="return confirm('게시글을 복구하시겠습니까? 다시 사용자들에게 공개됩니다.');"
+                                  th:if="${post.active.name() == 'INACTIVE'}"
+                                  th:action="@{/admin/board/restore/{id}(id=${post.id})}">
+                                <button class="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-2 py-1 rounded transition"
+                                        title="복구 (Restore)"
+                                        type="submit">
+                                    <i class="fa-solid fa-trash-arrow-up"></i> 복구
+                                </button>
+                            </form>
+
+                            <!-- 영구 삭제 버튼: 항상 표시 (혹은 정책에 따라 INACTIVE일 때만 표시) -->
+                            <form method="post" onsubmit="return confirm('정말 영구 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.');"
+                                  th:action="@{/admin/board/delete/{id}(id=${post.id})}">
+                                <button class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition"
+                                        title="영구 삭제 (Hard Delete)"
+                                        type="submit">
+                                    <i class="fa-solid fa-eraser"></i> 삭제
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${postPage.empty}">
+                    <td class="px-6 py-12 text-center text-gray-500" colspan="6">
+                        데이터가 없습니다.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div class="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-3 sm:px-6"
+             th:if="${!postPage.empty}">
+            <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">Total <span class="font-medium"
+                                                                 th:text="${postPage.totalElements}">0</span> posts</p>
+                </div>
+                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm">
+                    <a class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                       th:href="@{/admin/board/list(page=${postPage.number}, searchWord=${request.searchWord}, filter=${request.filter}, active=${request.active}, searchPostType=${request.searchPostType})}"
+                       th:if="${postPage.hasPrevious()}">
+                        <i class="fa-solid fa-chevron-left h-4 w-4"></i>
+                    </a>
+                    <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-purple-600 ring-1 ring-inset ring-gray-300 bg-purple-50 focus:z-20 focus:outline-offset-0">
+                        <span th:text="${postPage.number + 1}">1</span>
+                    </span>
+                    <a class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                       th:href="@{/admin/board/list(page=${postPage.number + 2}, searchWord=${request.searchWord}, filter=${request.filter}, active=${request.active}, searchPostType=${request.searchPostType})}"
+                       th:if="${postPage.hasNext()}">
+                        <i class="fa-solid fa-chevron-right h-4 w-4"></i>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

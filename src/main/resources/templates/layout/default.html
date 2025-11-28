@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- [추가] CSRF Token Meta Tags -->
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <!-- SEO Meta Tags (동적 주입 가능) -->
+    <meta name="description" th:content="${metaDescription} ?: '샘플'" layout:fragment="meta-description">
+    <meta name="keywords" content="샘플" layout:fragment="meta-keywords">
+    <meta property="og:title" th:content="${ogTitle} ?: '샘플'" layout:fragment="og-title">
+    <meta property="og:description" th:content="${ogDescription} ?: '샘플.'" layout:fragment="og-description">
+    <meta property="og:image" th:content="${ogImage} ?: '/image/og-default.png'" layout:fragment="og-image">
+    <meta property="og:url" th:content="${currentUrl}" layout:fragment="og-url">
+
+    <link rel="canonical" th:href="${currentUrl != null ? currentUrl.split('\?')[0] : ''}"/>
+    <link rel="canonical" th:href="${currentUrl != null ? currentUrl.split('\?')[0] : ''}"/>
+
+    <title layout:title-pattern="$CONTENT_TITLE | 샘플">샘플</title>
+
+    <!-- Tailwind CSS 빌드 파일 -->
+    <link rel="stylesheet" th:href="@{/css/output.css}">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- NProgress (로딩 바) CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+
+    <!-- HTMX (SPA 동작) -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- NProgress JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+
+    <style>
+        /* HTMX 요청 중 로딩 표시 등을 위한 설정 */
+        .htmx-indicator {
+            opacity: 0;
+            transition: opacity 200ms ease-in;
+        }
+        .htmx-request .htmx-indicator {
+            opacity: 1;
+        }
+        .htmx-request.htmx-indicator {
+            opacity: 1;
+        }
+
+        /* 페이지 전환 애니메이션 */
+        #main-content {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .htmx-swapping #main-content {
+            opacity: 0;
+        }
+        .htmx-settling #main-content {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-800 flex flex-col min-h-screen font-sans" hx-boost="true">
+
+<!-- Header Fragment -->
+<nav class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300" th:replace="~{fragments/header :: header}"></nav>
+
+<!-- NProgress 설정 및 [추가] HTMX CSRF 설정 스크립트 -->
+<script>
+    // HTMX 요청 시 CSRF 토큰 헤더 자동 추가
+    document.addEventListener("htmx:configRequest", function (evt) {
+        NProgress.start();
+
+        var token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        var header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+        if (token && header) {
+            evt.detail.headers[header] = token;
+        }
+    });
+
+    document.addEventListener("htmx:afterRequest", function() {
+        NProgress.done();
+    });
+    document.addEventListener("htmx:historyRestore", function() {
+        window.scrollTo(0, 0);
+    });
+</script>
+
+<!-- Main Content -->
+<main id="main-content" class="flex-grow container mx-auto px-4 py-8 sm:px-6 lg:px-8 w-full max-w-7xl">
+    <!-- Flash Messages (알림창) -->
+    <div th:if="${message}"
+         class="mb-6 p-4 rounded-xl bg-green-50 border border-green-200 text-green-700 flex items-center gap-3 shadow-sm animate-fade-in-down"
+         role="alert">
+        <i class="fa-solid fa-circle-check text-lg"></i>
+        <span th:text="${message}" class="font-medium">처리되었습니다.</span>
+    </div>
+    <div th:if="${errorMessage}"
+         class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-center gap-3 shadow-sm animate-fade-in-down"
+         role="alert">
+        <i class="fa-solid fa-circle-exclamation text-lg"></i>
+        <span th:text="${errorMessage}" class="font-medium">오류가 발생했습니다.</span>
+    </div>
+
+    <div layout:fragment="content"></div>
+</main>
+
+<!-- Footer Fragment -->
+<footer class="bg-white border-t border-gray-100 mt-auto" th:replace="~{fragments/footer :: footer}"></footer>
+
+<!-- [이동] Alpine.js Plugins (Collapse) & Core - body 태그 닫기 직전으로 이동 -->
+<!-- defer 속성 제거하고 body 끝에 배치하여 DOM 로드 후 실행 보장 -->
+<script src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<th:block layout:fragment="script"></th:block>
+</body>
+</html>

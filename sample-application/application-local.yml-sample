@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/base_project
+    username: secret
+    password: "YOUR_LOCAL_DB_PASSWORD" # 🔒 마스킹됨 (로컬 DB 비번)
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+#p6spy query logging
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: false     #필요할때 킴
+
+social:
+  google:
+    baseUrl: https://accounts.google.com
+    apiBaseUrl: https://www.googleapis.com
+    clientId: "YOUR_GOOGLE_CLIENT_ID"       # 🔒 마스킹됨
+    redirectUri: http://localhost:8080/social/google/redirect
+    secretKey: "YOUR_GOOGLE_SECRET_KEY"     # 🔒 마스킹됨
+    scope: email profile
+
+#스웨거 활성화
+springdoc:
+  swagger-ui:
+    enabled: true

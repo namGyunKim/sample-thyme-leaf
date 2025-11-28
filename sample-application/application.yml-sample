@@ -1,0 +1,81 @@
+server:
+  servlet:
+    session:
+      timeout: 43200m
+  port: 8080
+  # [추가] 프록시(AWS LB 등) 헤더 처리: HTTPS 리다이렉트 문제 해결
+  forward-headers-strategy: native
+  shutdown: graceful
+
+spring:
+  web:
+    resources:
+      add-mappings: true
+  threads:
+    virtual:
+      enabled: true
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+  profiles:
+    active: prod
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 1000MB
+  thymeleaf:
+    cache: false
+    check-template: true
+    enable-spring-el-compiler: true
+    prefix: classpath:/templates/
+    suffix: .html
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: secret@gmail.com
+    password: "YOUR_GMAIL_APP_PASSWORD" # 🔒 마스킹됨 (앱 비밀번호)
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+    from: secret@gmail.com        # 보내는 사람의 이메일 주소
+
+
+s3:
+  bucket: namgyun-prod
+  bucket-local: namgyun-local
+aws:
+  access-key: "YOUR_AWS_ACCESS_KEY"     # 🔒 마스킹됨 (AWS Access Key)
+  secret-key: "YOUR_AWS_SECRET_KEY"     # 🔒 마스킹됨 (AWS Secret Key)
+  region: ap-northeast-2
+
+logging:
+  level:
+    org:
+      springframework:
+        core:
+          LocalVariableTableParameterNameDiscoverer: error
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{traceId:-NO_TRACE}] --- [%15.15t] %-40.40logger{39} : %m%n"
+
+#스웨거 비활성화
+springdoc:
+  swagger-ui:
+    enabled: false
+
+#===============================================
+# CORS 및 Origin 필터 설정
+#===============================================
+app:
+  cors:
+    allowed-origins: http://localhost:8080
+
+sms:
+  key: "YOUR_SMS_API_KEY"       # 🔒 마스킹됨 (SMS Key)
+  secret: "YOUR_SMS_SECRET"     # 🔒 마스킹됨 (SMS Secret)
+  from: "YOUR_SENDER_PHONE"     # 🔒 마스킹됨 (발신번호)

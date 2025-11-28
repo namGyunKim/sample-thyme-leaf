@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 로그 저장 경로: 절대 경로 (/app/logs) -->
+    <property name="LOG_FILE" value="/app/logs/error.log"/>
+
+    <!-- 1. 콘솔 출력 (app.sh의 리다이렉션을 통해 app.log에 저장됨) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{traceId:-NO_TRACE}] --- [%15.15t] %-40.40logger{39} : %m%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- 2. 파일 출력 (error.log) -->
+    <!-- RollingPolicy를 사용하지 않고 단일 파일에 계속 씀 (backup.sh가 매일 백업 및 비우기 수행) -->
+    <appender name="FILE-ERROR" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_FILE}</file>
+        <append>true</append>
+
+        <!-- *************************************************************** -->
+        <!-- [중요] 파일 저장 필터링 전략: 오직 ERROR 레벨만 기록한다.             -->
+        <!-- INFO, WARN 등은 기록하지 않으며, 시스템에 치명적인 오류만 남긴다.      -->
+        <!-- *************************************************************** -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{traceId:-NO_TRACE}] --- [%15.15t] %-40.40logger{39} : %m%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- 로컬 환경: INFO 레벨 콘솔 출력만 수행 -->
+    <springProfile name="local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- 운영 환경 -->
+    <springProfile name="prod">
+        <!--
+           Root Level은 INFO로 두어 애플리케이션의 흐름(Console -> app.log)은 기록하되,
+           FILE-ERROR 앱펜더는 위에서 정의한 필터에 의해 ERROR만 골라서 error.log에 저장함.
+        -->
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE-ERROR"/>
+        </root>
+    </springProfile>
+</configuration>
